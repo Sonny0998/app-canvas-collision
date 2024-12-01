@@ -1,7 +1,6 @@
 const canvas = document.getElementById("canvas");
 let ctx = canvas.getContext("2d");
 
-// Obtiene las dimensiones de la pantalla actual
 const window_height = window.innerHeight;
 const window_width = window.innerWidth;
 canvas.height = window_height;
@@ -18,8 +17,8 @@ class Circle {
         this.text = text;
         this.speed = speed;
 
-        this.dx = (Math.random() > 0.5 ? 1 : -1) * this.speed; // Velocidad en X
-        this.dy = (Math.random() > 0.5 ? 1 : -1) * this.speed; // Velocidad en Y
+        this.dx = (Math.random() > 0.5 ? 1 : -1) * this.speed; 
+        this.dy = (Math.random() > 0.5 ? 1 : -1) * this.speed; 
     }
 
     draw(context) {
@@ -38,54 +37,42 @@ class Circle {
 
     update(context) {
         this.draw(context);
+        this.posY -= this.dy;  // Movimiento hacia arriba
 
-        // Actualizar la posición X
-        this.posX += this.dx;
-        // Cambiar la dirección si el círculo llega al borde del canvas en X
-        if (this.posX + this.radius > window_width || this.posX - this.radius < 0) {
-            this.dx = -this.dx;
-        }
-
-        // Actualizar la posición Y
-        this.posY += this.dy;
-        // Cambiar la dirección si el círculo llega al borde del canvas en Y
-        if (this.posY + this.radius > window_height || this.posY - this.radius < 0) {
-            this.dy = -this.dy;
+        // Reaparecer cuando llega al borde superior
+        if (this.posY - this.radius < 0) {
+            this.posY = window_height + this.radius;
         }
     }
 }
 
-// Crear un array para almacenar N círculos
 let circles = [];
 
-// Función para generar círculos aleatorios
 function generateCircles(n) {
     for (let i = 0; i < n; i++) {
-        let radius = Math.random() * 30 + 20; // Radio entre 20 y 50
+        let radius = Math.random() * 30 + 20;
         let x = Math.random() * (window_width - radius * 2) + radius;
-        let y = Math.random() * (window_height - radius * 2) + radius;
-        let color = `#${Math.floor(Math.random() * 16777215).toString(16)}`; // Color aleatorio
-        let speed = Math.random() * 2 + 1; // Velocidad entre 1 y 3
-        let text = `C${i + 1}`; // Etiqueta del círculo
+        let y = window_height + radius;
+        let color = `#${Math.floor(Math.random() * 16777215).toString(16)}`;
+        let speed = Math.random() * 2 + 1;
+        let text = `C${i + 1}`;
         circles.push(new Circle(x, y, radius, color, text, speed));
     }
 }
 
-// Función para detectar colisiones entre dos círculos
+// Detectar colisión entre dos círculos
 function detectCollision(circle1, circle2) {
     let dx = circle1.posX - circle2.posX;
     let dy = circle1.posY - circle2.posY;
     let distance = Math.sqrt(dx * dx + dy * dy);
-
     return distance < circle1.radius + circle2.radius;
 }
 
-// Función para manejar las colisiones
+// Manejar las colisiones
 function handleCollisions() {
     for (let i = 0; i < circles.length; i++) {
         for (let j = i + 1; j < circles.length; j++) {
             if (detectCollision(circles[i], circles[j])) {
-                // Intercambiar las velocidades en caso de colisión
                 let tempDx = circles[i].dx;
                 let tempDy = circles[i].dy;
 
@@ -99,16 +86,26 @@ function handleCollisions() {
     }
 }
 
-// Función para animar los círculos
-function animate() {
-    ctx.clearRect(0, 0, window_width, window_height); // Limpiar el canvas
-    circles.forEach(circle => {
-        circle.update(ctx); // Actualizar cada círculo
+// Detectar clic en el canvas
+canvas.addEventListener("click", (e) => {
+    let mouseX = e.clientX;
+    let mouseY = e.clientY;
+
+    circles = circles.filter(circle => {
+        let dx = mouseX - circle.posX;
+        let dy = mouseY - circle.posY;
+        let distance = Math.sqrt(dx * dx + dy * dy);
+        return distance > circle.radius;  // Eliminar círculos cerca del clic
     });
-    handleCollisions(); // Detectar y manejar colisiones
-    requestAnimationFrame(animate); // Repetir la animación
+});
+
+// Animar los círculos
+function animate() {
+    ctx.clearRect(0, 0, window_width, window_height);
+    circles.forEach(circle => circle.update(ctx));
+    handleCollisions();
+    requestAnimationFrame(animate);
 }
 
-// Generar N círculos y comenzar la animación
-generateCircles(30); // Puedes cambiar el número de círculos aquí
+generateCircles(30);
 animate();
